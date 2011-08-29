@@ -1,0 +1,8 @@
+#!/bin/bash
+
+VOL=$1
+TITLE=$2
+CONTENT=`markdown dbe$VOL.md`
+FRAME=`cat dbe_frame.html | sed "s/{{vol}}/$VOL/" | sed "s/{{title}}/$TITLE/"`
+
+python -c "print \"\"\"$FRAME\"\"\".replace('{{{content}}}', \"\"\"$CONTENT\"\"\")" > "dbe$VOL-$TITLE.html"
