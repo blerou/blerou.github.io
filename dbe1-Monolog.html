@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='utf-8'>
+		<title>Design by Examples #1 - Monolog</title>
+		<link href="core.css" type="text/css" rel="stylesheet" />
+	</head>
+	<body>
+	<div class="body">
+		<h1>Design by Examples #1 - Monolog</h1>
+
+<h2>Monolog</h2>
+
+<p>Az első alany a <a href="https://github.com/Seldaek/monolog">Monolog</a> lett. Ez egy általános loggoláshoz létrehozott library, a Symfony2 alapértelmezett loggere.</p>
+
+<p>A leírását olvasva megakadt a szeme az alábbi példa kódsoron:</p>
+
+<pre><code>$log-&gt;pushHandler(new StreamHandler('path/to/your.log', Logger::WARNING));
+</code></pre>
+
+<p>A kérdés, amely felmerült bennem pedig így szólt: miért kell a <code>Handler</code>nek tudnia arról, hogy milyen szinten történik a loggolás? 
+A <code>Logger</code> fenttart egy konstanst - <code>Logger::WARNING</code> - amely átkerül a <code>Handler</code>hez, majd az megmondja a bejövő log üzenet alapján, hogy tud-e vele mit kezdeni - <a href="https://github.com/blerou/monolog/blob/master/src/Monolog/Handler/HandlerInterface.php#L21"><code>isHandling()</code></a>. Ez így kicsit büdös, hiszen a <code>Logger</code> felelőssége kellene legyen, hogy csak azokat a <code>Handler</code>eket értesítse ki, akik a megfelelő szinttel tudnak foglalkozni. Célom azt bemutatni, hogyan tudunk kis lépésekben, teszt vezérelten eljutni oda, hogy elérjük ezt az állapotot.</p>
+
+<h2>Minden kezdet nehéz</h2>
+
+<p>A lib egy látszólag mindenre kiterjedő test suite-tal érkezik. Azonban hamar kiderült, hogy ez sajnos csak a látszat. A coverage megvan, csak a tesztek metódusokhoz írodtak, nem pedig funkcionalitást tesztelnek. Ez pedig arra utal, hogy a teszteket utólag írták meg - <a href="https://github.com/blerou/monolog/commit/ed6b0e32a262b57ccdacf1145c225350f6e68eb9">és valóban</a>. A TDD másik neve <em>Test first development</em> és nem véletlenül. A tesztek nagyban veszítenek az erejükből, ha utólag kerülnek megírásra, mivel így nem vezetik a designt, pusztán csak a kész implementációt tesztelik.</p>
+
+<p>Sajnos ez ahhoz is hozzájárul, hogy nem tudom egyszerűen elkezdeni a munkát egy failing testtel, kénytelen vagyok megírni pár tesztet, ami a funkcionalitást teszteli. Mindenek előtt <a href="https://github.com/blerou/monolog/commit/c9685dfdc274e093c1f75154dbde8aeae934e440#diff-0">nulladik lépés gyanánt bevezettem egy egyszerű setUp() metódust és ide kiemeltem a Logger példányosítást</a>.</p>
+
+<p>A célom eléréséhez a <code>addInfo()</code> és <code>addInfo()</code>, ..., <code>addAlert()</code> - alias <code>addRecord()</code> - metódusokon át vezet az út - ezek adják a Logger alap funkcionalitásának egy részét. A problémám már csak az volt, hogy pont ez az alap funkcionalitás nem volt tesztelve. Volt külön egy-egy metódushoz, de nem a "nagy" egészhez. Sebaj, írjunk egyet. </p>
+
+<iframe src="https://github.com/blerou/monolog/commit/a3a23ae33acf03856ac4aee132263f7060033a4c#diff-0" style="height:540px;" class="github-embed" scrolling="no"></iframe>
+
+<p>Itt jegyezném meg, hogy az eredeti tesztesetek docblockjában szerepel egy <em>@covers</em> annotáció. Ez elég elhibázott dolog, hiszen ez is azt próbálja leírni, hogy az adott teszteset mely metódust hivatott tesztelni, holott nem ez a lényeg. Ez is az utólag megírt tesztek ismérve.</p>
+
+<h2>Egy felesleges static története</h2>
+
+<p>A következő lépés pusztán egy kis kódtisztítás, <a href="https://github.com/blerou/monolog/commit/9931ec85fbce1d3903371637f509456623c0a030#diff-0">eltűntettem a <code>getName()</code> metódust</a>. Az oka pedig: egy kutyaközönséges getter, a rosszabbik fajtából. Semmi szükség rá, hiszen a <code>Handler</code>en kívül mindenki másnak irreleváns a "csatorna" neve, a <code>Handler</code> pedig megkapja a a log üzenetben.</p>
+
+<p>Következő három lépésben pedig eltávolítottam a <code>getLevelName()</code> metódust. Valójában csak a log üzenetben játszik szerepet, ugyanúgy egyedi, mint a logolás szintje. Ezt ez a tudás rész lehet az <code>addRecord()</code> szignatúrájának. Emellett kívülről (majdnem) senki sem használja.</p>
+
+<p>A lépések:<br />
+Első lépés gyanánt, miután egyetlen teszt sem foglalkozik a log szint nevével, ezért eltávolítottam a tesztelés során a teszt log üzenet nem ellenőrzött részeit. Ez az egyetlen külső hívása a metódusnak.</p>
+
+<iframe src="https://github.com/blerou/monolog/commit/50fa0d27f7c93b58f9c67ff2b59d9934eaaa084d#diff-0" style="height:220px;" class="github-embed" scrolling="no"></iframe>
+
+<p>A 2. lépésben bevezettem a <code>$levelName</code> paramétert az <code>addRecord()</code> szignatúrájában és ezt szépen végig is vezettem a megfelelő hívásokon.</p>
+
+<iframe src="https://github.com/blerou/monolog/commit/73e7d4d5931c48f0cb0810832c855281467c90eb#diff-0" style="height:1250px;" class="github-embed" scrolling="no"></iframe>
+
+<p>És a 3. lépésben el lehet tüntetni a <code>getLevelName()</code> static metódust. Engedjük is el.</p>
+
+<iframe src="https://github.com/blerou/monolog/commit/013f6a79e37a629dd69467531af847ee6302a2f3#diff-0" style="height:610px;" class="github-embed" scrolling="no"></iframe>
+
+<h2>Áladaptáció</h2>
+
+<p>A következő lépés kissé irrelevánsnak tűnhet, bár szerintem nagyon is fontos. <a href="https://github.com/blerou/monolog/commit/8c68a33a2f92d94e834eb075762713ca627f921c#diff-0">Kidobtam a "compat" metódusokat</a>. Ezek nyújtottak "kompatibilitási" felületet a ZF és Symfony2 frameworkök irányába.</p>
+
+<p>Ez azonban több problémát is felvet:</p>
+
+<ol>
+<li>kód duplikáció: ugyanaz a metódus kétszer is szerepel, csak más néven.</li>
+<li>egy library nem tudhat semmilyen frameworkök létezéséről. Az adaptációs réteget a frameworknek kell megoldani, csak ők tudhatják mire van szükségük, egy lib soha.</li>
+</ol>
+
+<p>(Ez az a változtatás, ami miatt valószínüleg soha sem fogadnának el egy pull requestet.)</p>
+
+<h2>Tesztek</h2>
+
+<p>Ezután elérkeztem oda, hogy most már tényleg csak az a kód szerepel a <code>Logger</code>ben és a hozzá tartozó tesztekben, amire szükség van. Ígyhát kitisztítottam kicsit a testsuite-ot:</p>
+
+<ul>
+<li><a href="https://github.com/blerou/monolog/commit/d957927b9c87e15f4abfa6b8ec28bfab22fc960a#diff-0">konstruktort nem tesztelünk külön</a>, hiszen minden egyes tesztesetben példányosítuk az objetumot.</li>
+<li>a korábban megírt teszteset már lefedett egy régebbit, ezért az eltávolítottam. Itt azért érdemes megnézni és elgondolkozni, hogy miért nem a interface-t mockolta ki a teszt, miért inkább egy (csak ebből a célból készült) implementációt. Ez valószínűleg azért van, mert az <code>AbstractHandler</code> alapértelmezett paraméterei és viselkedése pont megfelelt a tesztesethez. Csakhogy ezáltal elveszett a tesztből az az információ, hogy itt azért hívódik meg a <code>handle()</code> metódus, mert korábban már az <code>isHandling()</code> igaz eredményt adott. Ez pedig egy smell, megint csak azt mutatja, hogy a tesztet utólag írták meg.</li>
+</ul>
+
+<iframe src="https://github.com/blerou/monolog/commit/e3b23a2465f269f85d46392ad643ec0d6d6fc814#L0L54" style="height:320px;" class="github-embed" scrolling="no"></iframe>
+
+<ul>
+<li>valamint szükségem volt arra a tesztesetre is, ami a "nem kezelés" esetét fedte le. Amit ez megvolt el tudtam távolítani a régi tesztesetet, amely hasonló gyengeségeket tudott felmutatni, mint a fenti eset.</li>
+</ul>
+
+<iframe src="https://github.com/blerou/monolog/commit/eb801af195d95e7438a7346405a62ae28035e861#diff-0" style="height:372px;" class="github-embed" scrolling="no"></iframe>
+
+<iframe src="https://github.com/blerou/monolog/commit/a6dd9d22f2d6c8f6049b668b9baa015796242d58#diff-0" style="height:372px;" class="github-embed" scrolling="no"></iframe>
+
+<h2>Puzzle - aki kapja ...</h2>
+
+<p>Ezután már csak egy teszteset hiányzott, több beregisztrált <code>Handler</code> esetén, hogyan történik meg a hivások sora, ki kapja el, ki adja tovább a lehetőséget.</p>
+
+<iframe src="https://github.com/blerou/monolog/commit/4b68842d6b24a295d52e91f55e1bddfa8feba332#diff-1" style="height:540px;" class="github-embed" scrolling="no"></iframe>
+
+<p>Ez az a pont, ahol elkezdenek beszélni a tesztek. Az eddigi tesztesetek metódusokhoz írodtak, nem funkcionalitáshoz, és ez az eset éppen nem volt lefedve. Ami viszont ebből a tesztesetből tisztán látszik, hogy pontosan fordított fontossági sorrendben kell beregisztrálni a <code>Handler</code>eket, különben egészen más hatást érünk el, mint amire számítunk. Ezen a ponton bukik meg számomra handlerek tárolásának stack modelje, mivel ez egyáltalán nem természetes módja az ilyen dolgok intézésének. Nem hiszem, hogy a Symfony2-ben is fordított sorrendben kellene megadni a handlereket. Sokkal inkább arra gyanakszom, hogy ott - jó szokás szerint - <a href="https://github.com/Seldaek/monolog/blob/master/src/Monolog/Handler/GroupHandler.php">a <code>GroupHandler</code>t használják, ami viszont már soros működésű</a>.</p>
+
+<p>És következzen magának az <code>addRecord()</code>nak az átrendezése. Ez az a szituáció, ahol a tesztek fogják a kezünket és a diff nem túl sokat segit a különbség megjelenítésében, ezért álljon itt a régi, majd az új metódus.</p>
+
+<p>A régi:</p>
+
+<iframe src="https://github.com/blerou/monolog/blob/5267b03b1e4861c4657ede17a88f13ef479db482/src/Monolog/Logger.php#L151" style="height:788px;" class="github-embed" scrolling="no"></iframe>
+
+<p>és az új:</p>
+
+<iframe src="https://github.com/blerou/monolog/blob/4b68842d6b24a295d52e91f55e1bddfa8feba332/src/Monolog/Logger.php#L135" style="height:570px;" class="github-embed" scrolling="no"></iframe>
+
+<p>Azért egy újabb "csúnya" dolgot csak műveltem, kidobtam egy default <code>Handler</code>t. Ennek az volt az oka, hogy az ilyenek csak aknák a kódban. Ha erre van szükség, akkor az jelenjen meg expliciten a konfigurációban.</p>
+
+<iframe src="https://github.com/blerou/monolog/commit/4b68842d6b24a295d52e91f55e1bddfa8feba332#L0L143" style="height:120px;" class="github-embed" scrolling="no"></iframe>
+
+<h3>Forrás</h3>
+
+<p><a href="https://github.com/blerou/monolog">Teljes forráskód</a> és a <a href="https://github.com/blerou/monolog/commits/master">commitok listája</a>.</p>
+	</div>
+	</body>
+</html>
