@@ -55,18 +55,11 @@ Ez azonban több problémát is felvet:
 
 ## Tesztek
 
-Ezután elérkeztem oda, hogy most már tényleg csak az a kód szerepel a `Logger`ben és a hozzá tartozó tesztekben, amire szükség van. Ígyhát kitisztítottam kicsit a testsuite-ot:
+Ezután elérkeztem oda, hogy most már tényleg csak az a kód szerepel a `Logger`ben és a hozzá tartozó tesztekben, amire szükség van. Ígyhát koncentráljunk kicsit a feladatra. (A korábbi tesztek, bár rossznak tartom őket, megtartottam a későbbi BC break elkerülése végett.)
 
- * [konstruktort nem tesztelünk külön](https://github.com/blerou/monolog/commit/d957927b9c87e15f4abfa6b8ec28bfab22fc960a#diff-0), hiszen minden egyes tesztesetben példányosítuk az objetumot.
- * a korábban megírt teszteset már lefedett egy régebbit, ezért az eltávolítottam. Itt azért érdemes megnézni és elgondolkozni, hogy miért nem a interface-t mockolta ki a teszt, miért inkább egy (csak ebből a célból készült) implementációt. Ez valószínűleg azért van, mert az `AbstractHandler` alapértelmezett paraméterei és viselkedése pont megfelelt a tesztesethez. Csakhogy ezáltal elveszett a tesztből az az információ, hogy itt azért hívódik meg a `handle()` metódus, mert korábban már az `isHandling()` igaz eredményt adott. Ez pedig egy smell, megint csak azt mutatja, hogy a tesztet utólag írták meg.
- 
-<iframe src="https://github.com/blerou/monolog/commit/e3b23a2465f269f85d46392ad643ec0d6d6fc814#L0L54" style="height:320px;" class="github-embed" scrolling="no"></iframe>
-
- * valamint szükségem volt arra a tesztesetre is, ami a "nem kezelés" esetét fedte le. Amit ez megvolt el tudtam távolítani a régi tesztesetet, amely hasonló gyengeségeket tudott felmutatni, mint a fenti eset.
+Szükségem volt még egy tesztesetre, ami a "nem kezelés" esetét fedte le.
 
 <iframe src="https://github.com/blerou/monolog/commit/eb801af195d95e7438a7346405a62ae28035e861#diff-0" style="height:372px;" class="github-embed" scrolling="no"></iframe>
-
-<iframe src="https://github.com/blerou/monolog/commit/a6dd9d22f2d6c8f6049b668b9baa015796242d58#diff-0" style="height:372px;" class="github-embed" scrolling="no"></iframe>
 
 ## Puzzle - aki kapja ...
 
@@ -84,7 +77,7 @@ A régi:
 
 és az új:
 
-<iframe src="https://github.com/blerou/monolog/blob/4b68842d6b24a295d52e91f55e1bddfa8feba332/src/Monolog/Logger.php#L135" style="height:570px;" class="github-embed" scrolling="no"></iframe>
+<iframe src="https://github.com/blerou/monolog/blob/00ef581f5f6a76e45de63c469d24548daace0f22/src/Monolog/Logger.php#L135" style="height:540px;" class="github-embed" scrolling="no"></iframe>
 
 Azért egy újabb "csúnya" dolgot csak műveltem, kidobtam egy default `Handler`t. Ennek az volt az oka, hogy az ilyenek csak aknák a kódban. Ha erre van szükség, akkor az jelenjen meg expliciten a konfigurációban.
 
