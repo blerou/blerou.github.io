@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: P.E.K.K.A. 101
 ---
 
