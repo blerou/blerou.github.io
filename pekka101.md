@@ -1,7 +1,22 @@
 ---
 layout: simple_page
 title: P.E.K.K.A. 101
-description: Avagy hogyan támadjunk ...
+description: Avagy hogyan használd ...
 ---
 
-# A támadó egységekről általában
+## disclaimer
+
+Az itt leírtak saját megfigyelésen alapulnak. Bármiféle eggyezés a valósággal pusztán a véletlen műve ;)
+
+# Célpont választása
+
+A játék nehézségét alapvetően az jelenti, hogy nem tudsz direkt célpontokat adni az egységeknek, pusztán a helyet választhatod meg, ahova leteszed. Ezután a szelek szárnyán utaznak. Nos, nem teljesen.
+
+Bizonyos szempontok szerint célpontot kell választania minden egységnek. Ha ezt ismered, akkor sokkal nagyobb esélyed van a sikeres támadásra, mintha csak véletlenszerűen ledobálnád őket.
+
+A rosszhír, hogy ez a választó logika egységenként változik. Mivel az írás a PEKKAkat célozza meg így most róluk lesz szó (és még néhány segítőről).
+
+Két elv érvényesül:
+1) mindig az leghamarabb elérhető célpontot választja. Mit jelent ez pontosan? Ha bemegy egy PEKKA egy várrészbe és van tőle balra egy fallal teljesen elzárt épület, jobbra pedig kicsit távolabb ugyan egy hasonló épület, azonban itt a fal megkerülhető, akkor a jobb oldali épületet fogja választani.
+2) mindig egységek választanak célpontot, sosem csapatok. Mit jelent ez pontosan? Hiába menetel együtt három PEKKA és érné el a fal mögötti épületet 3 másodperc alatt (tegyük fel, hogy ennyi nekik lebontani a falat - de egy PEKKAnak 10 másodperc lenne), nem azt fogják választani. Inkább rámennek a falon kívűl 6 másodperc alatt megközelíthető épületre.
+
